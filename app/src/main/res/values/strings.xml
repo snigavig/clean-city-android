@@ -15,5 +15,10 @@
 
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_activity_create_item">Create</string>
+    <string name="title_garbage">Report Garbage</string>
+    <string name="title_bin">Request Bin</string>
+    <string name="button_create_text">Create!</string>
+    <string name="hello_world">Hello world!</string>
 
 </resources>

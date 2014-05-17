@@ -13,13 +13,13 @@ import android.view.ViewGroup;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link GarbageLitsFragment.OnFragmentInteractionListener} interface
+ * {@link GarbageListFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link GarbageLitsFragment#newInstance} factory method to
+ * Use the {@link GarbageListFragment#newInstance} factory method to
  * create an instance of this fragment.
  *
  */
-public class GarbageLitsFragment extends Fragment {
+public class GarbageListFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -40,15 +40,15 @@ public class GarbageLitsFragment extends Fragment {
      * @return A new instance of fragment GarbageLitsFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static GarbageLitsFragment newInstance(String param1, String param2) {
-        GarbageLitsFragment fragment = new GarbageLitsFragment();
+    public static GarbageListFragment newInstance(String param1, String param2) {
+        GarbageListFragment fragment = new GarbageListFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
-    public GarbageLitsFragment() {
+    public GarbageListFragment() {
         // Required empty public constructor
     }
 
