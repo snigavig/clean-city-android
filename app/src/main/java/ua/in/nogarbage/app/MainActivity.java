@@ -13,6 +13,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -21,6 +29,7 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
+    private GarbageMapFragment mGarbageMapFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -46,8 +55,24 @@ public class MainActivity extends ActionBarActivity
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getSupportFragmentManager();
+        //fragmentManager.beginTransaction()
+        //        .replace(R.id.container, GarbageMapFragment.newInstance(position + 1))
+        //        .commit();
+        Fragment fragment = null;
+
+        switch(position) {
+            case 0:
+                fragment = new GarbageMapFragment();
+                Bundle args = new Bundle();
+                args.putInt("section_number", position + 1);
+                fragment.setArguments(args);
+                break;
+            case 1:
+                fragment = GarbageLitsFragment.newInstance(position + 1);
+                break;
+        }
         fragmentManager.beginTransaction()
-                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
+                .replace(R.id.container, fragment)
                 .commit();
     }
 
@@ -89,7 +114,64 @@ public class MainActivity extends ActionBarActivity
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class GarbageMapFragment extends Fragment {
+        // ...
+        public static final String ARG_SECTION_NUMBER = "section_number";
+        static final LatLng HAMBURG = new LatLng(53.558, 9.927);
+        static final LatLng KIEL = new LatLng(53.551, 9.993);
+        private GoogleMap map;
+        @Override
+        public void onDestroyView() {
+
+            FragmentManager fm = getFragmentManager();
+
+            Fragment xmlFragment = fm.findFragmentById(R.id.map);
+            if (xmlFragment != null) {
+                fm.beginTransaction().remove(xmlFragment).commit();
+            }
+
+            super.onDestroyView();
+        }
+
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            View v = inflater.inflate(R.layout.garbage_map, container, false);
+
+            map = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map))
+                    .getMap();
+
+            Marker hamburg = map.addMarker(new MarkerOptions().position(HAMBURG)
+                    .title("Hamburg"));
+            Marker kiel = map.addMarker(new MarkerOptions()
+                    .position(KIEL)
+                    .title("Kiel")
+                    .snippet("Kiel is cool")
+                    .icon(BitmapDescriptorFactory
+                            .fromResource(R.drawable.ic_launcher)));
+
+            // Move the camera instantly to hamburg with a zoom of 15.
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(HAMBURG, 15));
+
+            // Zoom in, animating the camera.
+            map.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);
+
+            //...
+
+            return v;
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            ((MainActivity) activity).onSectionAttached(
+                    getArguments().getInt(ARG_SECTION_NUMBER));
+        }
+    }
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class GarbageLitsFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -100,21 +182,23 @@ public class MainActivity extends ActionBarActivity
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
+        public static GarbageLitsFragment newInstance(int sectionNumber) {
+            GarbageLitsFragment fragment = new GarbageLitsFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
             return fragment;
         }
 
-        public PlaceholderFragment() {
+        public GarbageLitsFragment() {
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_map, container, false);
+                                 Bundle savedInstanceState) {
+
+                    return inflater.inflate(R.layout.fragment_garbage_list, container, false);
+
         }
 
         @Override
@@ -124,5 +208,6 @@ public class MainActivity extends ActionBarActivity
                     getArguments().getInt(ARG_SECTION_NUMBER));
         }
     }
+
 
 }

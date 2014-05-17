@@ -8,19 +8,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.maps.SupportMapFragment;
 
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link GarbageMapFragment.OnFragmentInteractionListener} interface
+ * {@link GarbageLitsFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link GarbageMapFragment#newInstance} factory method to
+ * Use the {@link GarbageLitsFragment#newInstance} factory method to
  * create an instance of this fragment.
  *
  */
-public class GarbageMapFragment extends SupportMapFragment {
+public class GarbageLitsFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -38,16 +37,19 @@ public class GarbageMapFragment extends SupportMapFragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment GarbageMapFragment.
+     * @return A new instance of fragment GarbageLitsFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static GarbageMapFragment newInstance(String param1, String param2) {
-        GarbageMapFragment fragment = new GarbageMapFragment();
+    public static GarbageLitsFragment newInstance(String param1, String param2) {
+        GarbageLitsFragment fragment = new GarbageLitsFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
+    }
+    public GarbageLitsFragment() {
+        // Required empty public constructor
     }
 
     @Override
@@ -63,7 +65,7 @@ public class GarbageMapFragment extends SupportMapFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_map, container, false);
+        return inflater.inflate(R.layout.fragment_garbage_list, container, false);
     }
 
     // TODO: Rename method, update argument and hook method into UI event
