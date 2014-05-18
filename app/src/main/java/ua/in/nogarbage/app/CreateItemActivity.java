@@ -4,9 +4,17 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 
+import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -27,8 +35,26 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
 
-public class CreateItemActivity extends ActionBarActivity implements ActionBar.TabListener {
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
+public class CreateItemActivity extends ActionBarActivity implements ActionBar.TabListener,
+        GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -40,15 +66,122 @@ public class CreateItemActivity extends ActionBarActivity implements ActionBar.T
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
 
+    private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    public Location curLocation;
+    private LocationClient mLocationClient;
+
     /**
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
 
+    private RequestQueue queue;
+    final String url = "http://192.168.10.185/cleancity/api/garbagePoints"; // :)
+
+    /*
+     * Called when the Activity is no longer visible.
+     */
+    @Override
+    public void onStop() {
+        // Disconnecting the client invalidates it.
+        mLocationClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Connect the client.
+        mLocationClient.connect();
+    }
+    /*
+ * Called by Location Services when the request to connect the
+ * client finishes successfully. At this point, you can
+ * request the current location or start periodic updates
+ */
+    @Override
+    public void onConnected(Bundle dataBundle) {
+        // Display the connection status
+
+        curLocation = mLocationClient.getLastLocation();
+
+    }
+
+    @Override
+    public void onDisconnected() {
+        // Display the connection status
+        Toast.makeText(this, "Disconnected. Please re-connect.",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        /*
+         * Google Play services can resolve some errors it detects.
+         * If the error has a resolution, try sending an Intent to
+         * start a Google Play services activity that can resolve
+         * error.
+         */
+        if (connectionResult.hasResolution()) {
+            try {
+                // Start an Activity that tries to resolve the error
+                connectionResult.startResolutionForResult(
+                        this,
+                        CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                /*
+                 * Thrown if Google Play services canceled the original
+                 * PendingIntent
+                 */
+            } catch (IntentSender.SendIntentException e) {
+                // Log the error
+                e.printStackTrace();
+            }
+        } else {
+            /*
+             * If no resolution is available, display a dialog to the
+             * user with the error.
+             */
+            this.showErrorDialog(connectionResult.getErrorCode());
+        }
+    }
+
+    private boolean showErrorDialog(int errorCode) {
+        int resultCode =
+                GooglePlayServicesUtil.
+                        isGooglePlayServicesAvailable(this);
+        // If Google Play services is available
+        if (ConnectionResult.SUCCESS == resultCode) {
+            // In debug mode, log the status
+
+            // Continue
+            return true;
+            // Google Play services was not available for some reason
+        } else {
+            Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(errorCode,this,
+                    CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            // If Google Play services can provide an error dialog
+            if (errorDialog != null) {
+                // Create a new DialogFragment for the error dialog
+                MainActivity.ErrorDialogFragment errorFragment =  new MainActivity.ErrorDialogFragment();
+                // Set the dialog in the DialogFragment
+                errorFragment.setDialog(errorDialog);
+                // Show the error dialog in the DialogFragment
+                errorFragment.show(this.getSupportFragmentManager(),"Location Updates");
+
+            } return false;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_item);
+        queue = Volley.newRequestQueue(this);
+        mLocationClient = new LocationClient(this, this, this);
+
+        LocationManager mlocManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        LocationListener mlocListener = new MyLocationListener();
+        mlocManager.requestLocationUpdates( LocationManager.GPS_PROVIDER, 0, 0, mlocListener);
 
         // Set up the action bar.
         final ActionBar actionBar = getSupportActionBar();
@@ -85,6 +218,38 @@ public class CreateItemActivity extends ActionBarActivity implements ActionBar.T
         }
     }
 
+    public class MyLocationListener implements LocationListener{
+
+        @Override
+
+        public void onLocationChanged(Location loc){
+            loc.getLatitude();
+            loc.getLongitude();
+            String Text = "Lat = " + loc.getLatitude() + "|Long = " + loc.getLongitude();
+            Toast.makeText( getApplicationContext(), Text, Toast.LENGTH_SHORT).show();
+            //  final TextView tv = (TextView) findViewById(R.id.text);
+            //  tv.setText(tv.getText()+ "||" + Text);
+            curLocation = loc;
+        }
+
+        @Override
+
+        public void onProviderDisabled(String provider){
+            Toast.makeText( getApplicationContext(),"Gps Disabled", Toast.LENGTH_SHORT ).show();
+        }
+
+        @Override
+
+        public void onProviderEnabled(String provider){
+            Toast.makeText( getApplicationContext(),"Gps Enabled",Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+
+        public void onStatusChanged(String provider, int status, Bundle extras){
+        }
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -122,7 +287,45 @@ public class CreateItemActivity extends ActionBarActivity implements ActionBar.T
 
     public void onButtonTakePhotoClick(View v) {
         this.dispatchTakePictureIntent();
+        Log.d("_________________", mCurrentPhotoPath);
         this.galleryAddPic();
+    }
+
+    public void onButtonCreateClick(View v) {
+        // dummy Post params to be sent to the server
+        HashMap<String, HashMap<String, Double>> params = new HashMap<String, HashMap<String, Double>>();
+        HashMap<String, Double> location = new HashMap<String, Double>();
+
+        Double mLatitude;
+        mLatitude = curLocation.getLatitude();
+        Double mLongitude;
+        mLongitude = curLocation.getLongitude();
+        location.put("latitude", mLatitude);
+        location.put("longitude", mLongitude);
+        params.put("location", location);
+
+        JsonObjectRequest req = new JsonObjectRequest(this.url, new JSONObject(params),
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            VolleyLog.v("Response:%n %s", response.toString(4));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.e("Error: ", error.getMessage());
+            }
+        });
+
+// add the request object to the queue to be executed
+        //ApplicationController.getInstance().addToRequestQueue(req);
+        queue.add(req);
+        Intent addIntent = new Intent(this, MainActivity.class);
+        startActivity(addIntent);
     }
 
     String mCurrentPhotoPath;
@@ -243,10 +446,8 @@ public class CreateItemActivity extends ActionBarActivity implements ActionBar.T
             Button mButton = (Button) rootView.findViewById(R.id.buttonTakePhoto);
             Log.d("_________________", String.valueOf(args));
             if (args == 1) {
-                Log.d("_________________", "garbage");
                 mButton.setVisibility(View.VISIBLE);
             } else {
-                Log.d("_________________", "bins");
                 mButton.setVisibility(View.GONE);
             }
             return rootView;

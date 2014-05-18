@@ -20,6 +20,14 @@ import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -27,9 +35,19 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 
 public class MainActivity extends ActionBarActivity
@@ -41,17 +59,79 @@ public class MainActivity extends ActionBarActivity
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private GarbageMapFragment mGarbageMapFragment;
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    public HashMap<Double, Double> mHashMap = new HashMap<Double, Double>();
+    private GoogleMap map;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
 
+    private RequestQueue queue;
+    final String url = "http://192.168.10.185/cleancity/api/garbagePoints"; // :)
+
+    // prepare the GET Request
+    JsonArrayRequest req = new JsonArrayRequest(url, new Response.Listener<JSONArray> () {
+        @Override
+        public void onResponse(JSONArray response) {
+            try {
+                VolleyLog.v("Response:%n %s", response.toString(4));
+                // update the main content by replacing fragments
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                //fragmentManager.beginTransaction()
+                //        .replace(R.id.container, GarbageMapFragment.newInstance(position + 1))
+                //        .commit();
+                Fragment fragment = new GarbageMapFragment();
+                        Bundle args = new Bundle();
+
+                if (response != null) {
+                    int len = response.length();
+                    for (int i=0;i<len;i++){
+                        JSONObject responseObject = (JSONObject) response.get(i);
+                        int lenObj = response.length();
+                        for (int j=0;j<lenObj;j++){
+                            Log.d("responseObject", responseObject.getJSONObject("location").toString());
+                            mHashMap.put(responseObject.getJSONObject("location").getDouble("longitude"), responseObject.getJSONObject("location").getDouble("latitude"));
+                        }
+                    }
+                }
+
+                args.putInt("section_number", 1);
+
+                //mHashMap = (HashMap<Double, Double>) bundle.getSerializable("HashMap");
+
+                args.putSerializable("HashMap",mHashMap);
+                       fragment.setArguments(args);
+
+                Fragment xmlFragment = fragmentManager.findFragmentById(R.id.garbageMap);
+                if (xmlFragment != null) {
+                    fragmentManager.beginTransaction().remove(xmlFragment).commit();
+                }
+
+
+                fragmentManager.beginTransaction()
+                        .replace(R.id.container, fragment)
+                        .commit();
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }, new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            VolleyLog.e("Error: ", error.getMessage());
+        }
+    });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        queue = Volley.newRequestQueue(this);
 
+        // add it to the RequestQueue
+        queue.add(req);
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -84,6 +164,17 @@ public class MainActivity extends ActionBarActivity
                 fragment = GarbageLitsFragment.newInstance(position + 1);
                 break;
         }
+
+        //for (Map.Entry<Double, Double> entry : mHashMap.entrySet()) {
+            //System.out.printf("Key : %s and Value: %s %n", entry.getKey(), entry.getValue());
+            //Log.d("ResponseEntry1", entry.getValue().toString());
+            //Log.d("ResponseEntry2", entry.getKey().toString());
+
+            //map = ((SupportMapFragment) fragment).getMap();
+            //map.addMarker(new MarkerOptions().position(new LatLng(entry.getKey(), entry.getValue())).title("lalala"));
+            // Move the camera instantly to hamburg with a zoom of 15.
+        //}
+
         fragmentManager.beginTransaction()
                 .replace(R.id.container, fragment)
                 .commit();
@@ -216,6 +307,7 @@ public class MainActivity extends ActionBarActivity
         static final LatLng CIKLUM = new LatLng(50.439204, 30.523619);
         private GoogleMap map;
         private LocationClient mLocationClient;
+        public HashMap<Double, Double> mHashMap;
         private Location mCurrentLocation;
         private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
@@ -247,9 +339,14 @@ public class MainActivity extends ActionBarActivity
             Toast.makeText(getActivity(), "Connected", Toast.LENGTH_SHORT).show();
 
             mCurrentLocation = mLocationClient.getLastLocation();
-
-
-            Toast.makeText(getActivity(), mCurrentLocation.toString() , Toast.LENGTH_SHORT).show();
+            //BitmapDescriptor icon = BitmapDescriptorFactory
+            //        .fromResource(R.and);
+            MarkerOptions markerOptions = new MarkerOptions();
+            //LatLng latLng = new LatLng(78.55, 244.67);
+            // Setting the position for the marker
+            markerOptions.position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
+// setting the icon
+            //markerOptions.icon(icon);
             // Move the camera instantly to hamburg with a zoom of 15.
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), 18), 3000, null);
 
@@ -350,9 +447,7 @@ public class MainActivity extends ActionBarActivity
 
             map = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.garbageMap))
                     .getMap();
-
-            Marker hamburg = map.addMarker(new MarkerOptions().position(CIKLUM)
-                    .title("Hamburg"));
+            Marker ciklum = map.addMarker(new MarkerOptions().position(CIKLUM).title("lalala"));
 
             // Move the camera instantly to hamburg with a zoom of 15.
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(CIKLUM, 18));
@@ -368,8 +463,17 @@ public class MainActivity extends ActionBarActivity
         @Override
         public void onAttach(Activity activity) {
             super.onAttach(activity);
+
+            Bundle bundle = getArguments();
+            if(bundle!=null) {
+                if(bundle.getSerializable("HashMap")!=null) {
+                    mHashMap = (HashMap<Double, Double>) bundle.getSerializable("HashMap");
+                }
+            }
             ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
+
+                    getArguments().getInt(ARG_SECTION_NUMBER)
+            );
         }
     }
     /**

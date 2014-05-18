@@ -23,6 +23,7 @@
         android:layout_below="@+id/buttonTakePhoto"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:text="Create" />
+        android:text="Create"
+        android:onClick="onButtonCreateClick" />
 
 </RelativeLayout>
