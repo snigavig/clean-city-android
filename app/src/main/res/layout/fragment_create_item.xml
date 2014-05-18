@@ -13,7 +13,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Take Photo"
-        android:id="@+id/buttonTakePhoto" />
+        android:id="@+id/buttonTakePhoto"
+        android:onClick="onButtonTakePhotoClick" />
 
     <Button
         android:layout_width="wrap_content"
@@ -23,13 +24,5 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:text="Create" />
-
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/imageView2"
-        android:layout_above="@+id/buttonTakePhoto"
-        android:layout_alignRight="@+id/buttonTakePhoto"
-        android:layout_alignEnd="@+id/buttonTakePhoto" />
 
 </RelativeLayout>
